@@ -21,10 +21,13 @@ logger = Logger()
 def lambda_handler(event, context):
     event_body = json.loads(event["body"])
     file_name = event_body["fileName"]
-    human_input = event_body["prompt"]
+    # human_input = event_body["prompt"]
+    human_input = 'Contesta las preguntas y responde en formato json { "${pregunta}": "${respuesta}" }: ¿El documento es sobre una solicitud de devolución de Saldo a Favor?, ¿El documento es sobre un requerimiento?, ¿El documento es sobre el impuesto sobre la renta?, ¿El documento es sobre el impuesto al valor agregado?, ¿El documento es sobre el impuesto sobre prodcucción y servicios?, ¿El documento es sobre retenciones de ISR?, ¿El documento es sobre retenciones de IVA?, ¿A que periodo hace referencia la solicitud de información?, ¿Qué importe está sujeto a aclaración?'
     conversation_id = event["pathParameters"]["conversationid"]
 
-    user = event["requestContext"]["authorizer"]["claims"]["sub"]
+    # user = event["requestContext"]["authorizer"]["claims"]["sub"]
+    user = "74d8f4c8-30a1-709b-3c66-2b9a189aca33"
+    logger.info("User: %s", user)
 
     s3.download_file(BUCKET, f"{user}/{file_name}/index.faiss", "/tmp/index.faiss")
     s3.download_file(BUCKET, f"{user}/{file_name}/index.pkl", "/tmp/index.pkl")
@@ -74,5 +77,5 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "*",
         },
-        "body": json.dumps(res["answer"]),
+        "body": res["answer"],
     }

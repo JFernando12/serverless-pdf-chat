@@ -82,6 +82,7 @@ const Document: React.FC = () => {
       setConversation(updatedConversation);
     }
 
+    console.log('conversation', conversation);
     await API.post(
       "serverless-pdf-chat",
       `/${conversation?.document.documentid}/${conversation?.conversationid}`,

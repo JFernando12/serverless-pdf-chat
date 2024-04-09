@@ -161,12 +161,12 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: dev
-      Auth:
-        DefaultAuthorizer: CognitoAuthorizer
-        AddDefaultAuthorizerToCorsPreflight: false
-        Authorizers:
-          CognitoAuthorizer:
-            UserPoolArn: !GetAtt CognitoUserPool.Arn
+      # Auth:
+      #   DefaultAuthorizer: CognitoAuthorizer
+      #   AddDefaultAuthorizerToCorsPreflight: false
+      #   Authorizers:
+      #     CognitoAuthorizer:
+      #       UserPoolArn: !GetAtt CognitoUserPool.Arn
       Cors:
         AllowOrigin: "'*'"
         AllowHeaders: "'*'"
