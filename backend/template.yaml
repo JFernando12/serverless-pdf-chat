@@ -316,7 +316,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/generate_response/
-      Timeout: 30
+      Timeout: 120
       MemorySize: 2048
       Policies:
         - DynamoDBCrudPolicy:
@@ -328,7 +328,7 @@ Resources:
               Effect: "Allow"
               Action: "bedrock:InvokeModel"
               Resource:
-                - "arn:aws:bedrock:*::foundation-model/anthropic.claude-v2"
+                - "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
                 - "arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v1"
       Environment:
         Variables:

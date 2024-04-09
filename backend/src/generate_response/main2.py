@@ -7,21 +7,18 @@ from langchain.memory import ConversationBufferMemory
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain
-from langchain_community.chat_models import BedrockChat
 
 MEMORY_TABLE = os.environ["MEMORY_TABLE"]
 BUCKET = os.environ["BUCKET"]
 
-
 s3 = boto3.client("s3")
 logger = Logger()
-
 
 @logger.inject_lambda_context(log_event=True)
 def lambda_handler(event, context):
     event_body = json.loads(event["body"])
-    file_name = event_body["fileName"]
     human_input = event_body["prompt"]
+    file_name = event_body["fileName"]
     conversation_id = event["pathParameters"]["conversationid"]
 
     user = event["requestContext"]["authorizer"]["claims"]["sub"]
@@ -38,7 +35,7 @@ def lambda_handler(event, context):
         model_id="amazon.titan-embed-text-v1",
         client=bedrock_runtime,
         region_name="us-east-1",
-    ), BedrockChat(
+    ), Bedrock(
         model_id="anthropic.claude-3-sonnet-20240229-v1:0", client=bedrock_runtime, region_name="us-east-1"
     )
     faiss_index = FAISS.load_local("/tmp", embeddings, allow_dangerous_deserialization=True)
@@ -62,9 +59,22 @@ def lambda_handler(event, context):
         return_source_documents=True,
     )
 
-    res = qa.invoke({"question": human_input})
+    questions = [
+        "Responde 'si' o 'no' a la pregunta: ¿El documento es sobre una solicitud de devolución de Saldo a Favor?",
+        "Responde 'si' o 'no' a la pregunta: ¿El documento es sobre un requerimiento?",
+        "Responde 'si' o 'no' a la pregunta: ¿El documento es sobre el impuesto sobre la renta?",
+        "Responde 'si' o 'no' a la pregunta: ¿El documento es sobre el impuesto al valor agregado?",
+        "Responde 'si' o 'no' a la pregunta: ¿El documento es sobre el impuesto sobre prodcucción y servicios?",
+        "Responde 'si' o 'no' a la pregunta: ¿El documento es sobre retenciones de ISR?",
+        "Responde 'si' o 'no' a la pregunta: ¿El documento es sobre retenciones de IVA?",
+        "Responde 'si' o 'no' a la pregunta: ¿A que periodo hace referencia la solicitud de información?",
+        "Responde 'si' o 'no' a la pregunta: ¿Que importe está sujeto a aclaración?",
+    ]
 
-    logger.info(res)
+    responses = []
+    for question in questions:
+        res = qa.invoke({"question": question})
+        responses.append(res["answer"])
 
     return {
         "statusCode": 200,
@@ -74,5 +84,5 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "*",
         },
-        "body": json.dumps(res["answer"]),
+        "body": json.dumps(responses),
     }
