@@ -22,7 +22,7 @@ def lambda_handler(event, context):
     event_body = json.loads(event["body"])
     file_name = event_body["fileName"]
     # human_input = event_body["prompt"]
-    human_input = 'Contesta las preguntas y responde en formato json { "${pregunta}": "${respuesta}" }: ¿El documento es sobre una solicitud de devolución de Saldo a Favor?, ¿El documento es sobre un requerimiento?, ¿El documento es sobre el impuesto sobre la renta?, ¿El documento es sobre el impuesto al valor agregado?, ¿El documento es sobre el impuesto sobre prodcucción y servicios?, ¿El documento es sobre retenciones de ISR?, ¿El documento es sobre retenciones de IVA?, ¿A que periodo hace referencia la solicitud de información?, ¿Qué importe está sujeto a aclaración?'
+    human_input = 'Contesta las preguntas: ¿El documento es sobre una solicitud de devolución de Saldo a Favor?, ¿El documento es sobre un requerimiento?, ¿El documento es sobre el impuesto sobre la renta?, ¿El documento es sobre el impuesto al valor agregado?, ¿El documento es sobre el impuesto sobre prodcucción y servicios?, ¿El documento es sobre retenciones de ISR?, ¿El documento es sobre retenciones de IVA?, ¿A que periodo hace referencia la solicitud de información?, ¿Qué importe está sujeto a aclaración?. Responde en formato json, ejemplo: { "Aqui pregunta": "Aqui respuesta" }'
     conversation_id = event["pathParameters"]["conversationid"]
 
     # user = event["requestContext"]["authorizer"]["claims"]["sub"]
