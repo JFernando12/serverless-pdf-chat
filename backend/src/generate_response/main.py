@@ -1,31 +1,29 @@
 import os, json
 import boto3
 from aws_lambda_powertools import Logger
-from langchain.llms.bedrock import Bedrock
 from langchain_community.chat_message_histories import DynamoDBChatMessageHistory
 from langchain.memory import ConversationBufferMemory
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.chat_models import BedrockChat
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
+from langchain import hub
 
 MEMORY_TABLE = os.environ["MEMORY_TABLE"]
 BUCKET = os.environ["BUCKET"]
 
-
 s3 = boto3.client("s3")
 logger = Logger()
-
 
 @logger.inject_lambda_context(log_event=True)
 def lambda_handler(event, context):
     event_body = json.loads(event["body"])
     file_name = event_body["fileName"]
     # human_input = event_body["prompt"]
-    human_input = 'Contesta las preguntas: ¿El documento es sobre una solicitud de devolución de Saldo a Favor?, ¿El documento es sobre un requerimiento?, ¿El documento es sobre el impuesto sobre la renta?, ¿El documento es sobre el impuesto al valor agregado?, ¿El documento es sobre el impuesto sobre prodcucción y servicios?, ¿El documento es sobre retenciones de ISR?, ¿El documento es sobre retenciones de IVA?, ¿A que periodo hace referencia la solicitud de información?, ¿Qué importe está sujeto a aclaración?. Responde en formato json, ejemplo: { "Aqui pregunta": "Aqui respuesta" }'
-    conversation_id = event["pathParameters"]["conversationid"]
+    human_input = 'Contesta las preguntas, quiero que repondas un solo JSON y nada mas, Ejemplo: { "Aqui pregunta": "Aqui respuesta" }. ¿El documento es sobre una solicitud de devolución de Saldo a Favor?, ¿El documento es sobre un requerimiento?, ¿El documento es sobre el impuesto sobre la renta?, ¿El documento es sobre el impuesto al valor agregado?, ¿El documento es sobre el impuesto sobre prodcucción y servicios?, ¿El documento es sobre retenciones de ISR?, ¿El documento es sobre retenciones de IVA?, ¿A que periodo hace referencia la solicitud de información?, ¿Qué importe está sujeto a aclaración?'
 
-    # user = event["requestContext"]["authorizer"]["claims"]["sub"]
     user = "74d8f4c8-30a1-709b-3c66-2b9a189aca33"
     logger.info("User: %s", user)
 
@@ -46,28 +44,20 @@ def lambda_handler(event, context):
     )
     faiss_index = FAISS.load_local("/tmp", embeddings, allow_dangerous_deserialization=True)
 
-    message_history = DynamoDBChatMessageHistory(
-        table_name=MEMORY_TABLE, session_id=conversation_id
-    )
+    retrieval_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
+    combine_docs_chain = create_stuff_documents_chain(llm, retrieval_qa_chat_prompt)
+    retriever=faiss_index.as_retriever()
+    qa = create_retrieval_chain(retriever, combine_docs_chain)
 
-    memory = ConversationBufferMemory(
-        memory_key="chat_history",
-        chat_memory=message_history,
-        input_key="question",
-        output_key="answer",
-        return_messages=True,
-    )
+    res = qa.invoke({"input": human_input})
+    answer = json.loads(res["answer"])
 
-    qa = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=faiss_index.as_retriever(),
-        memory=memory,
-        return_source_documents=True,
-    )
+    response = {
+        "success": True,
+        "data": answer,
+    }
 
-    res = qa.invoke({"question": human_input})
-
-    logger.info(res)
+    logger.info(response)
 
     return {
         "statusCode": 200,
@@ -77,5 +67,5 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "*",
         },
-        "body": res["answer"],
+        "body": json.dumps(response),
     }

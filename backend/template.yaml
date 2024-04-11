@@ -339,7 +339,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref Api
-            Path: /{documentid}/{conversationid}
+            Path: /chat
             Method: POST
 
   AmplifyApp:
