@@ -15,6 +15,13 @@ BUCKET = os.environ["BUCKET"]
 s3 = boto3.client("s3")
 logger = Logger()
 
+def s3_key_exists(bucket, key):
+    try:
+        s3.head_object(Bucket=bucket, Key=key)
+        return True
+    except:
+        return False
+
 @logger.inject_lambda_context(log_event=True)
 def lambda_handler(event, context):
     event_body = json.loads(event["body"])
@@ -36,6 +43,28 @@ def lambda_handler(event, context):
         '''
     user = "74d8f4c8-30a1-709b-3c66-2b9a189aca33"
     logger.info("User: %s", user)
+
+    existsFaiss = s3_key_exists(BUCKET, f"{user}/{file_name}/index.faiss")
+    existsPkl = s3_key_exists(BUCKET, f"{user}/{file_name}/index.pkl")
+
+    if not existsFaiss or not existsPkl:
+        response = {
+            "success": False,
+            "message": "No se encontró el archivo en el bucket",
+        }
+
+        logger.info(response)
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*",
+            },
+            "body": json.dumps(response),
+        }
 
     s3.download_file(BUCKET, f"{user}/{file_name}/index.faiss", "/tmp/index.faiss")
     s3.download_file(BUCKET, f"{user}/{file_name}/index.pkl", "/tmp/index.pkl")
