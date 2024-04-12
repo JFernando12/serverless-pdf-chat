@@ -84,7 +84,7 @@ GenerateResponseFunction:
             Action: "bedrock:InvokeModel"
             Resource:
               - "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0" # adjust with different model
-              - "arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v1" # adjust with different model
+              - "arn:aws:bedrock:*::foundation-model/cohere.embed-multilingual-v3" # adjust with different model
 ```
 
 ### Deploy the application with AWS SAM
