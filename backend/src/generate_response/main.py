@@ -5,7 +5,6 @@ from langchain_community.embeddings import BedrockEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.chat_models import BedrockChat
 from langchain import hub
-from langchain.chains import RetrievalQA
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
@@ -27,10 +26,13 @@ def lambda_handler(event, context):
     event_body = json.loads(event["body"])
     file_name = event_body["fileName"]
     human_input = event_body.get("prompt", None)
+    k = event_body.get("k", 20)
+    lambda_mult = event_body.get("lambda_mult", 0.25)
+    fetch_k = event_body.get("fetch_k", 30)
 
     if not human_input:
         human_input = '''
-        Contesta las preguntas, quiero que respondas con un único JSON y nada más. Ejemplo: { "Aquí pregunta": "Aquí respuesta" }.
+        Contesta las preguntas, quiero que respondas con un único JSON y nada más. Ejemplo: { "¿Aquí pregunta?": "Aquí respuesta" }.
         ¿El documento se refiere a una solicitud de devolución de Saldo a Favor?
         ¿El documento es un requerimiento?
         ¿El documento trata sobre el impuesto sobre la renta?
@@ -89,12 +91,12 @@ def lambda_handler(event, context):
     prompt = hub.pull("rlm/rag-prompt")
     logger.info(prompt)
 
+
     retriever=faiss_index.as_retriever(
         search_type="mmr",
-        search_kwargs={'k': 20, 'lambda_mult': 0.25}
+        search_kwargs={'k': k, 'lambda_mult': lambda_mult, 'fetch_k': fetch_k}
     )
 
-    # RetrievalQA
     rag_chain = (
         {"context": retriever, "question": RunnablePassthrough()}
         | prompt
