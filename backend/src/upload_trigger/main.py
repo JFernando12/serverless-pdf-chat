@@ -11,14 +11,12 @@ MEMORY_TABLE = os.environ["MEMORY_TABLE"]
 QUEUE = os.environ["QUEUE"]
 BUCKET = os.environ["BUCKET"]
 
-
 ddb = boto3.resource("dynamodb")
 document_table = ddb.Table(DOCUMENT_TABLE)
 memory_table = ddb.Table(MEMORY_TABLE)
 sqs = boto3.client("sqs")
 s3 = boto3.client("s3")
 logger = Logger()
-
 
 @logger.inject_lambda_context(log_event=True)
 def lambda_handler(event, context):

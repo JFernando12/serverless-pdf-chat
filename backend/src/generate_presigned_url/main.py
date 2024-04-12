@@ -3,11 +3,11 @@ import boto3
 from botocore.config import Config
 import shortuuid
 from aws_lambda_powertools import Logger
-
+import requests
+import base64
 
 BUCKET = os.environ["BUCKET"]
 REGION = os.environ["REGION"]
-
 
 s3 = boto3.client(
     "s3",
@@ -18,7 +18,6 @@ s3 = boto3.client(
 )
 logger = Logger()
 
-
 def s3_key_exists(bucket, key):
     try:
         s3.head_object(Bucket=bucket, Key=key)
@@ -26,12 +25,14 @@ def s3_key_exists(bucket, key):
     except:
         return False
 
-
 @logger.inject_lambda_context(log_event=True)
 def lambda_handler(event, context):
-    user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
-    file_name_full = event["queryStringParameters"]["file_name"]
+    event_body = json.loads(event["body"])
+    file_name_full = event_body["fileName"]
     file_name = file_name_full.split(".pdf")[0]
+    base64_pdf = event_body["base64Pdf"]
+
+    user_id = "74d8f4c8-30a1-709b-3c66-2b9a189aca33"
 
     exists = s3_key_exists(BUCKET, f"{user_id}/{file_name_full}/{file_name_full}")
 
@@ -50,16 +51,9 @@ def lambda_handler(event, context):
     else:
         key = f"{user_id}/{file_name}.pdf/{file_name}.pdf"
 
-    presigned_url = s3.generate_presigned_url(
-        ClientMethod="put_object",
-        Params={
-            "Bucket": BUCKET,
-            "Key": key,
-            "ContentType": "application/pdf",
-        },
-        ExpiresIn=300,
-        HttpMethod="PUT",
-    )
+    pdfDecoded = base64.b64decode(base64_pdf)
+
+    s3.put_object(Bucket=BUCKET, Key=key, Body=pdfDecoded, ContentType="application/pdf")
 
     return {
         "statusCode": 200,
@@ -69,5 +63,5 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "*",
         },
-        "body": json.dumps({"presignedurl": presigned_url}),
+        "body": json.dumps({ "success": True }),
     }

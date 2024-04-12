@@ -2,7 +2,7 @@ import os, json
 import boto3
 from aws_lambda_powertools import Logger
 from langchain_community.embeddings import BedrockEmbeddings
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.indexes import VectorstoreIndexCreator
 from langchain_community.vectorstores import FAISS
 
@@ -44,7 +44,7 @@ def lambda_handler(event, context):
     )
 
     embeddings = BedrockEmbeddings(
-        model_id="amazon.titan-embed-text-v1",
+        model_id="cohere.embed-multilingual-v3",
         client=bedrock_runtime,
         region_name="us-east-1",
     )

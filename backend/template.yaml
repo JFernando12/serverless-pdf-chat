@@ -188,8 +188,8 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref Api
-            Path: /generate_presigned_url
-            Method: GET
+            Path: /upload
+            Method: POST
 
   UploadTriggerFunction:
     Type: AWS::Serverless::Function
@@ -300,7 +300,7 @@ Resources:
             - Sid: "BedrockScopedAccess"
               Effect: "Allow"
               Action: "bedrock:InvokeModel"
-              Resource: "arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v1"
+              Resource: "arn:aws:bedrock:*::foundation-model/cohere.embed-multilingual-v3"
       Environment:
         Variables:
           DOCUMENT_TABLE: !Ref DocumentTable
@@ -329,7 +329,7 @@ Resources:
               Action: "bedrock:InvokeModel"
               Resource:
                 - "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
-                - "arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v1"
+                - "arn:aws:bedrock:*::foundation-model/cohere.embed-multilingual-v3"
       Environment:
         Variables:
           MEMORY_TABLE: !Ref MemoryTable
